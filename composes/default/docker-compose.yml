@@ -25,7 +25,7 @@ services:
 
   studio:
     container_name: supabase-studio
-    image: supabase/studio:2025.05.19-sha-3487831
+    image: supabase/studio:2025.06.30-sha-6f5982d
     restart: unless-stopped
     healthcheck:
       test:
@@ -92,7 +92,7 @@ services:
 
   auth:
     container_name: supabase-auth
-    image: supabase/gotrue:v2.172.1
+    image: supabase/gotrue:v2.177.0
     depends_on:
       db:
         # Disable this if you are using an external Postgres database
@@ -233,7 +233,7 @@ services:
   # To use S3 backed storage: docker compose -f docker-compose.yml -f docker-compose.s3.yml up
   storage:
     container_name: supabase-storage
-    image: supabase/storage-api:v1.22.17
+    image: supabase/storage-api:v1.25.7
     depends_on:
       db:
         # Disable this if you are using an external Postgres database
@@ -305,7 +305,7 @@ services:
 
   meta:
     container_name: supabase-meta
-    image: supabase/postgres-meta:v0.89.0
+    image: supabase/postgres-meta:v0.91.0
     depends_on:
       db:
         # Disable this if you are using an external Postgres database
@@ -345,7 +345,7 @@ services:
 
   analytics:
     container_name: supabase-analytics
-    image: supabase/logflare:1.12.0
+    image: supabase/logflare:1.14.2
     healthcheck:
       test: [ "CMD", "curl", "http://localhost:4000/health" ]
       timeout: 5s
@@ -457,6 +457,59 @@ services:
     environment:
       LOGFLARE_API_KEY: ${LOGFLARE_API_KEY}
     command: [ "--config", "etc/vector/vector.yml" ]
+
+  supavisor:
+    container_name: supabase-pooler
+    image: supabase/supavisor:2.5.7
+    restart: unless-stopped
+    ports:
+      - ${POSTGRES_PORT}:5432
+      - ${POOLER_PROXY_PORT_TRANSACTION}:6543
+    volumes:
+      - ./volumes/pooler/pooler.exs:/etc/pooler/pooler.exs:ro,z
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "curl",
+          "-sSfL",
+          "--head",
+          "-o",
+          "/dev/null",
+          "http://127.0.0.1:4000/api/health"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      db:
+        condition: service_healthy
+      analytics:
+        condition: service_healthy
+    environment:
+      PORT: 4000
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      DATABASE_URL: ecto://supabase_admin:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/_supabase
+      CLUSTER_POSTGRES: true
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+      VAULT_ENC_KEY: ${VAULT_ENC_KEY}
+      API_JWT_SECRET: ${JWT_SECRET}
+      METRICS_JWT_SECRET: ${JWT_SECRET}
+      REGION: local
+      ERL_AFLAGS: -proto_dist inet_tcp
+      POOLER_TENANT_ID: ${POOLER_TENANT_ID}
+      POOLER_DEFAULT_POOL_SIZE: ${POOLER_DEFAULT_POOL_SIZE}
+      POOLER_MAX_CLIENT_CONN: ${POOLER_MAX_CLIENT_CONN}
+      POOLER_POOL_MODE: transaction
+      DB_POOL_SIZE: ${POOLER_DB_POOL_SIZE}
+    command:
+      [
+        "/bin/sh",
+        "-c",
+        "/app/bin/migrate && /app/bin/supavisor eval \"$$(cat /etc/pooler/pooler.exs)\" && /app/bin/server"
+      ]
 
 volumes:
   db-config:
