@@ -27,7 +27,8 @@ const RevenueCatEventSchema = z.object({
   })
 })
 
-const app = new Hono();
+const functionName = 'revenue-cat'
+const app = new Hono().basePath(`/${functionName}`)
 
 app.use('*', bearerAuth({ token: REVENUECAT_WEBHOOK_SECRET }))
 
