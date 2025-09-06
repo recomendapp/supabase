@@ -54,6 +54,16 @@ app.post('/subscriptions', async (c) => {
 
     const active = event.expiration_at_ms ? event.expiration_at_ms > Date.now() : true
 
+    if (event.type.toUpperCase() === "PRODUCT_CHANGE") {
+      if (event.original_transaction_id) {
+        await supabase
+          .from("subscriptions")
+          .update({ status: "inactive" })
+          .eq("original_transaction_id", event.original_transaction_id)
+          .neq("transaction_id", event.transaction_id)
+      }
+    }
+
     const { error } = await supabase
       .from("subscriptions")
       .upsert({
