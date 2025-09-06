@@ -107,6 +107,13 @@ app.post('/subscriptions', async (c) => {
         break
 
       case "PRODUCT_CHANGE":
+        if (event.original_transaction_id) {
+          await supabase
+            .from("subscriptions")
+            .update({ status: "inactive" })
+            .eq("original_transaction_id", event.original_transaction_id)
+            .neq("transaction_id", event.transaction_id)
+        }
         await supabase
           .from("subscriptions")
           .upsert({
