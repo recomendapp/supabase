@@ -73,7 +73,7 @@ app.post('/subscriptions', async (c) => {
     switch (type) {
       case "INITIAL_PURCHASE":
       case "RENEWAL":
-        await supabase
+        const { error: errorOne } = await supabase
           .from("subscriptions")
           .upsert({
             user_id: event.app_user_id,
@@ -86,14 +86,16 @@ app.post('/subscriptions', async (c) => {
             transaction_id: event.transaction_id,
             environment: event.environment,
           }, { onConflict: 'original_transaction_id' })
+        if (errorOne) throw errorOne;
         break
       
       case "EXPIRATION":
       case "CANCELLATION":
-        await supabase
+        const { error: errorTwo } = await supabase
           .from("subscriptions")
-          .update({
+          .upsert({
             user_id: event.app_user_id,
+            product_id: event.product_id!,
             store: event.store,
             status: (event.expiration_at_ms ? event.expiration_at_ms > Date.now() : false) ? "active" : "inactive",
             purchased_at: new Date(event.purchased_at_ms),
@@ -101,12 +103,12 @@ app.post('/subscriptions', async (c) => {
             original_transaction_id: event.original_transaction_id,
             transaction_id: event.transaction_id,
             environment: event.environment,
-          })
-          .eq("original_transaction_id", event.original_transaction_id)
+          }, { onConflict: 'original_transaction_id' })
+        if (errorTwo) throw errorTwo;
         break
 
       case "PRODUCT_CHANGE":
-        await supabase
+        const { error: errorThree } = await supabase
           .from("subscriptions")
           .upsert({
             user_id: event.app_user_id,
@@ -119,6 +121,7 @@ app.post('/subscriptions', async (c) => {
             transaction_id: event.transaction_id,
             environment: event.environment,
           }, { onConflict: 'original_transaction_id' })
+        if (errorThree) throw errorThree;
         break
 
       default:
