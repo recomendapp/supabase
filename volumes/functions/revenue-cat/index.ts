@@ -21,7 +21,7 @@ const BaseEventSchema = z.object({
   purchased_at_ms: z.number(),
   expiration_at_ms: z.number().nullable(),
   transaction_id: z.string(),
-  original_transaction_id: z.string().nullable(),
+  original_transaction_id: z.string(),
   environment: z.string(),
 });
 
@@ -62,7 +62,6 @@ const RevenueCatEventSchema = z.object({
 
 const functionName = 'revenue-cat'
 const app = new Hono().basePath(`/${functionName}`)
-
 app.use('*', bearerAuth({ token: REVENUECAT_WEBHOOK_SECRET }))
 
 app.post('/subscriptions', async (c) => {
@@ -80,13 +79,13 @@ app.post('/subscriptions', async (c) => {
             user_id: event.app_user_id,
             product_id: event.product_id!,
             store: event.store,
-            status: (event.expiration_at_ms ? event.expiration_at_ms > Date.now() : false) ? "active" : "inactive",
+            status: (event.expiration_at_ms && event.expiration_at_ms > Date.now()) ? "active" : "inactive",
             purchased_at: new Date(event.purchased_at_ms),
             expires_at: event.expiration_at_ms ? new Date(event.expiration_at_ms) : null,
             original_transaction_id: event.original_transaction_id,
             transaction_id: event.transaction_id,
             environment: event.environment,
-          }, { onConflict: 'transaction_id' })
+          }, { onConflict: 'original_transaction_id' })
         break
       
       case "EXPIRATION":
@@ -103,17 +102,10 @@ app.post('/subscriptions', async (c) => {
             transaction_id: event.transaction_id,
             environment: event.environment,
           })
-          .eq("transaction_id", event.transaction_id)
+          .eq("original_transaction_id", event.original_transaction_id)
         break
 
       case "PRODUCT_CHANGE":
-        if (event.original_transaction_id) {
-          await supabase
-            .from("subscriptions")
-            .update({ status: "inactive" })
-            .eq("original_transaction_id", event.original_transaction_id)
-            .neq("transaction_id", event.transaction_id)
-        }
         await supabase
           .from("subscriptions")
           .upsert({
@@ -126,7 +118,7 @@ app.post('/subscriptions', async (c) => {
             original_transaction_id: event.original_transaction_id,
             transaction_id: event.transaction_id,
             environment: event.environment,
-          }, { onConflict: 'transaction_id' })
+          }, { onConflict: 'original_transaction_id' })
         break
 
       default:
