@@ -1,4 +1,4 @@
-import Stripe from 'https://esm.sh/stripe@15.0.0?target=denonext'
+import Stripe from 'npm:stripe@^19.0.0'
 import { supabaseAdmin } from './supabase.ts';
 
 export const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, {
