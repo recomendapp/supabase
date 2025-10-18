@@ -33,7 +33,8 @@ transforms:
       kong: '.appname == "supabase-kong"'
       auth: '.appname == "supabase-auth"'
       rest: '.appname == "supabase-rest"'
-      realtime: '.appname == "supabase-realtime"'
+      # realtime: '.appname == "supabase-realtime"'
+      realtime: 'starts_with(string!(.appname), "realtime-dev")' # https://discord.com/channels/839993398554656828/1428739921262280836/1429099815043600425
       storage: '.appname == "supabase-storage"'
       functions: '.appname == "supabase-functions"'
       db: '.appname == "supabase-db"'
