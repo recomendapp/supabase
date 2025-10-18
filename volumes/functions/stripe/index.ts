@@ -1,5 +1,5 @@
 import { Hono } from 'jsr:@hono/hono'
-import { handleCreatePortal } from './routes/create-portal.ts'
+import { handleCreateCustomerPortal } from './routes/create-customer-portal.ts'
 import { supabaseBearerAuth } from './middlewares/auth.ts';
 import { handleCreateCheckoutSession } from './routes/create-checkout-session.ts';
 
@@ -11,7 +11,7 @@ app.use('*', async (c, next) => {
 })
 
 // Route
-app.post('/create-portal', supabaseBearerAuth(), handleCreatePortal)
+app.post('/create-customer-portal', supabaseBearerAuth(), handleCreateCustomerPortal)
 app.post('/create-checkout-session', supabaseBearerAuth(), handleCreateCheckoutSession)
 
 Deno.serve(app.fetch)

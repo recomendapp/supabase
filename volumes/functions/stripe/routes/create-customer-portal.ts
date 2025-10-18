@@ -6,7 +6,7 @@ const CreatePortalSchema = z.object({
   return_url: z.url().optional(),
 })
 
-export async function handleCreatePortal(c: Context) {
+export async function handleCreateCustomerPortal(c: Context) {
   try {
 	const payload = await c.req.json().catch(() => ({}))
 	const { return_url } = CreatePortalSchema.parse(payload)
