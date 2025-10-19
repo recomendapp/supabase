@@ -1,6 +1,6 @@
 import type { Context } from 'jsr:@hono/hono'
 import { z } from 'npm:zod'
-import { stripe, createOrRetrieveCustomer } from '../utils/stripe.ts'
+import { stripe, createOrRetrieveCustomer } from '../utils/stripe/index.ts'
 
 const CreateCheckoutSessionSchema = z.object({
 	price: z.object({ id: z.string() }),
@@ -12,7 +12,7 @@ const CreateCheckoutSessionSchema = z.object({
 
 const SITE_URL = Deno.env.get('SITE_URL')
 
-export async function handleCreateCheckoutSession(c: Context) {
+export const handleCreateCheckoutSession = async (c: Context) => {
   	try {
 		const payload = await c.req.json().catch(() => ({}))
 		const { price, quantity, metadata, success_url, cancel_url } = CreateCheckoutSessionSchema.parse(payload)

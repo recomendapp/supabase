@@ -1,12 +1,12 @@
 import type { Context } from 'jsr:@hono/hono'
 import { z } from 'npm:zod'
-import { stripe, createOrRetrieveCustomer } from '../utils/stripe.ts'
+import { stripe, createOrRetrieveCustomer } from '../utils/stripe/index.ts'
 
 const CreatePortalSchema = z.object({
   return_url: z.url().optional(),
 })
 
-export async function handleCreateCustomerPortal(c: Context) {
+export const handleCreateCustomerPortal = async (c: Context) => {
   try {
 	const payload = await c.req.json().catch(() => ({}))
 	const { return_url } = CreatePortalSchema.parse(payload)
