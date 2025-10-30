@@ -23,19 +23,6 @@ export const handleGetTile = async (c: Context) => {
 			return c.json({ error: 'Language not supported' }, 400);
 		}
 
-		// Path
-		const storagePath = `${exploreId}/${lang}.geojson`;
-		const { data: storedTile } = await supabaseAdmin
-			.storage
-			.from('explore_tiles')
-			.download(storagePath);
-		if (storedTile) {
-			const geojson = await storedTile.text();
-			return c.json(JSON.parse(geojson));
-		}
-
-		// Get data from DB
-		const dbData = await getExploreItems(exploreId, lang);
 		// Get explore metadata
 		const { data: exploreMetadata, error: metaError } = await supabaseAdmin
 			.from('explore')
@@ -45,6 +32,26 @@ export const handleGetTile = async (c: Context) => {
 		if (metaError || !exploreMetadata) {
 			return c.json({ error: 'Explore not found' }, 404);
 		}
+
+		// Path
+		const storagePath = `${exploreId}/${lang}.geojson`;
+		const { data: storedTile } = await supabaseAdmin
+			.storage
+			.from('explore_tiles')
+			.download(storagePath);
+		if (storedTile) {
+			const geojsonText = await storedTile.text();
+			const geojson = JSON.parse(geojsonText);
+
+			if (geojson.updated_at === exploreMetadata.updated_at) {
+				return c.json(geojson);
+			}
+			
+			console.log(`[ExploreTile] Rebuilding outdated tile ${exploreId} (${lang})`);
+		}
+
+		// Get data from DB
+		const dbData = await getExploreItems(exploreId, lang);
 
 		// Construct GeoJSON
 		const geojson = {
