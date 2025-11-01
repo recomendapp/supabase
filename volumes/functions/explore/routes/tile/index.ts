@@ -62,7 +62,10 @@ export const handleGetTile = async (c: Context) => {
 				geometry: item.location,
 				properties: {
 					id: item.id,
-					movie: item.movie,
+					movie: {
+						...item.movie,
+						genres_ids: item.movie.genres.map((g: { id: string }) => g.id),
+					},
 				},
 			})),
 		};
