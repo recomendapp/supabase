@@ -21,6 +21,7 @@ const ALLOWED_CONFIG = {
 	],
 	ALLOWED_ATTR: ['href','target','rel'],
 	ALLOW_DATA_ATTR: false,
+	WHOLE_DOCUMENT: true,
 }
 
 async function processMessage(msg: QueueMessage) {
