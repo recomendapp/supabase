@@ -27,19 +27,19 @@ async function processMessage(msg: QueueMessage) {
 
 	const { data } = await supabase
 		.from("user_reviews_tv_series")
-		.select("body_html")
+		.select("body")
 		.eq("id", review_id)
 		.single()
 
 	if (!data) return
 
-	const cleaned = DOMPurify.sanitize(data.body_html ?? "", ALLOWED_CONFIG)
+	const cleaned = DOMPurify.sanitize(data.body ?? "", ALLOWED_CONFIG)
 	const wrappedHtml = `<html>${cleaned}</html>`;
 
 	await supabase
 		.from("user_reviews_tv_series")
 		.update({
-		body_html: wrappedHtml,
+		body: wrappedHtml,
 		is_sanitized: true
 		})
 		.eq("id", review_id)
