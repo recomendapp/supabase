@@ -13,7 +13,12 @@ const sql = postgres(SUPABASE_DB_URL, { ssl: false })
 const QUEUE = "sanitize_review_tv_series_queue"
 
 const ALLOWED_CONFIG = {
-	ALLOWED_TAGS: ['p','strong','em','u','s','ul','ol','li','br','a','h1','h2','h3','blockquote'],
+	ALLOWED_TAGS: [
+		'html',
+		'p', 'strong', 'em', 'u', 's',
+		'ul','ol','li','br',
+		'a','h1','h2','h3','blockquote'
+	],
 	ALLOWED_ATTR: ['href','target','rel'],
 	ALLOW_DATA_ATTR: false,
 }
