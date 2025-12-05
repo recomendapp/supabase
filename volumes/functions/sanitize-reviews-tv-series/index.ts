@@ -14,14 +14,12 @@ const QUEUE = "sanitize_review_tv_series_queue"
 
 const ALLOWED_CONFIG = {
 	ALLOWED_TAGS: [
-		'html',
 		'p', 'strong', 'em', 'u', 's',
 		'ul','ol','li','br',
 		'a','h1','h2','h3','blockquote'
 	],
 	ALLOWED_ATTR: ['href','target','rel'],
 	ALLOW_DATA_ATTR: false,
-	WHOLE_DOCUMENT: true,
 }
 
 async function processMessage(msg: QueueMessage) {
@@ -36,11 +34,12 @@ async function processMessage(msg: QueueMessage) {
 	if (!data) return
 
 	const cleaned = DOMPurify.sanitize(data.body_html ?? "", ALLOWED_CONFIG)
+	const wrappedHtml = `<html>${cleaned}</html>`;
 
 	await supabase
 		.from("user_reviews_tv_series")
 		.update({
-		body_html: cleaned,
+		body_html: wrappedHtml,
 		is_sanitized: true
 		})
 		.eq("id", review_id)
