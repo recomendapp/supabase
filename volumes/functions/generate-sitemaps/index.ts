@@ -188,7 +188,24 @@ async function generateReviewSitemaps() {
     console.log("Finished review sitemaps.");
 }
 
-serve(async (req) => {
+const generateSitemaps = async () => {
+	try {
+		await Promise.all([
+			generateMovieSitemaps(),
+			generateTvSeriesSitemaps(),
+			generateUserSitemaps(),
+			generatePlaylistSitemaps(),
+			generateReviewSitemaps(),
+		]);
+		console.log("All sitemaps generated successfully.");
+	} catch (error) {
+		console.error("Error generating sitemaps:", error);
+	} finally {
+		await db.sql.end();
+	}
+};
+
+serve((req) => {
 	const authorization = req.headers.get("Authorization");
 	if (authorization !== `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`) {
 		return new Response("Unauthorized", { status: 401 });
@@ -196,22 +213,7 @@ serve(async (req) => {
     if (!SITE_URL) {
         return new Response("SITE_URL environment variable is not set.", { status: 500 });
     }
-    try {
-        await Promise.all([
-            generateMovieSitemaps(),
-            generateTvSeriesSitemaps(),
-            generateUserSitemaps(),
-            generatePlaylistSitemaps(),
-            generateReviewSitemaps(),
-        ]);
-        await db.sql.end();
-        return new Response("Sitemaps generated successfully.", { status: 200 });
-    } catch (error) {
-        console.error("Error generating sitemaps:", error);
-        await db.sql.end();
-		if (error instanceof Error) {
-			return new Response(`Error generating sitemaps: ${error.message}`, { status: 500 });
-		}
-		return new Response("Unknown error generating sitemaps.", { status: 500 });
-    }
+
+	generateSitemaps();
+	return new Response("Sitemap generation started.", { status: 202 });
 });
