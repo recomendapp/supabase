@@ -5,3 +5,4 @@ volumes/nginx-*/*
 test.http
 docker-compose.override.yml
 .DS_Store
+.vscode/
